@@ -113,6 +113,7 @@ const getProjectDateRange = (project) => {
 
       <!-- Add Project Action -->
       <button
+        id="workspace-add-project-btn"
         @click="openProjectForm()"
         class="flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-lg shadow-md transition cursor-pointer"
       >
@@ -122,7 +123,7 @@ const getProjectDateRange = (project) => {
     </div>
 
     <!-- Workspace Metadata header box -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-neutral-950/45 border border-neutral-850 p-4 rounded-xl">
+    <div id="workspace-metadata" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-neutral-950/45 border border-neutral-850 p-4 rounded-xl">
       <div class="flex items-center gap-3">
         <div class="h-9 w-9 rounded-lg bg-violet-600/10 flex items-center justify-center text-violet-400 border border-violet-900/30 flex-shrink-0">
           <Award class="w-4 h-4" />
@@ -145,7 +146,7 @@ const getProjectDateRange = (project) => {
     </div>
 
     <!-- Projects List section -->
-    <div class="space-y-4 pt-2">
+    <div id="workspace-projects-section" class="space-y-4 pt-2">
       <h3 class="text-sm font-semibold text-neutral-300 tracking-wide">Semua Project</h3>
       
       <!-- Empty State -->

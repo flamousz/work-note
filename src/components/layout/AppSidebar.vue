@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useWorkNoteStore } from '../../stores/workNoteStore'
-import { Briefcase, FolderKanban, Plus, LayoutDashboard, ChevronRight, ChevronDown } from 'lucide-vue-next'
+import { Briefcase, FolderKanban, Plus, LayoutDashboard, ChevronRight, ChevronDown, BookOpen } from 'lucide-vue-next'
 import WorkspaceForm from '../workspace/WorkspaceForm.vue'
 
 const store = useWorkNoteStore()
@@ -39,7 +39,7 @@ const handleWorkspaceSaved = () => {
 <template>
   <aside class="w-64 border-r border-neutral-800 bg-neutral-950/70 backdrop-blur-xl flex flex-col h-screen select-none">
     <!-- Brand / Header -->
-    <div class="h-14 border-b border-neutral-800 flex items-center px-6 gap-2.5">
+    <div id="sidebar-brand" class="h-14 border-b border-neutral-800 flex items-center px-6 gap-2.5">
       <div class="h-8 w-8 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center font-bold text-white shadow-md shadow-violet-500/20">
         W
       </div>
@@ -54,6 +54,7 @@ const handleWorkspaceSaved = () => {
       <!-- General Link -->
       <div>
         <router-link
+          id="sidebar-dashboard-link"
           to="/"
           class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg transition-colors cursor-pointer"
           :class="route.name === 'dashboard' ? 'bg-neutral-800/80 text-violet-400 font-semibold' : 'text-neutral-400 hover:bg-neutral-900 hover:text-white'"
@@ -68,6 +69,7 @@ const handleWorkspaceSaved = () => {
         <div class="flex items-center justify-between px-3">
           <span class="text-[10px] font-bold text-neutral-500 tracking-wider uppercase">Tempat Kerja</span>
           <button
+            id="sidebar-add-workspace-btn"
             @click="openWorkspaceForm()"
             class="text-neutral-400 hover:text-white p-0.5 hover:bg-neutral-800 rounded transition cursor-pointer"
             title="Tambah Tempat Kerja"
@@ -113,6 +115,18 @@ const handleWorkspaceSaved = () => {
           </li>
         </ul>
       </div>
+    </div>
+
+    <!-- Guide Link (Bottom) -->
+    <div class="px-3 py-3 border-t border-neutral-800/60">
+      <router-link
+        to="/guide"
+        class="flex items-center gap-3 px-3 py-2 text-xs font-medium rounded-lg transition-colors cursor-pointer"
+        :class="route.name === 'guide' ? 'bg-violet-950/50 text-violet-400 font-semibold border border-violet-900/30' : 'text-neutral-500 hover:bg-neutral-900 hover:text-neutral-300'"
+      >
+        <BookOpen class="w-4 h-4" />
+        Panduan
+      </router-link>
     </div>
 
     <!-- Workspace Form Modal -->

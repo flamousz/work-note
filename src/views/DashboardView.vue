@@ -1,13 +1,16 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useWorkNoteStore } from '../stores/workNoteStore'
-import { Briefcase, Calendar, User, ArrowRight, Edit, Plus, FolderKanban } from 'lucide-vue-next'
+import { Briefcase, Calendar, User, ArrowRight, Edit, Plus, FolderKanban, Sparkles, X, Play, Rocket } from 'lucide-vue-next'
 import WorkspaceForm from '../components/workspace/WorkspaceForm.vue'
+import { useOnboarding } from '../composables/useOnboarding'
 
 const store = useWorkNoteStore()
+const { hasCompletedTour, startDashboardTour } = useOnboarding()
 
 const isModalOpen = ref(false)
 const selectedWorkspace = ref(null)
+const showWelcomePrompt = ref(false)
 
 const workspaces = computed(() => store.workspaces)
 
@@ -24,12 +27,34 @@ const handleSaved = () => {
   isModalOpen.value = false
   selectedWorkspace.value = null
 }
+
+// First-visit detection
+onMounted(() => {
+  if (!hasCompletedTour.value) {
+    // Small delay so DOM is fully rendered
+    setTimeout(() => {
+      showWelcomePrompt.value = true
+    }, 800)
+  }
+})
+
+const startTourFromPrompt = () => {
+  showWelcomePrompt.value = false
+  // Small delay for prompt exit animation
+  setTimeout(() => {
+    startDashboardTour()
+  }, 300)
+}
+
+const dismissPrompt = () => {
+  showWelcomePrompt.value = false
+}
 </script>
 
 <template>
   <div class="p-8 max-w-6xl mx-auto space-y-8 animate-fade-in">
     <!-- Hero Header banner -->
-    <div class="relative bg-gradient-to-r from-violet-900/40 via-indigo-900/30 to-neutral-900 border border-violet-950/45 p-8 rounded-2xl overflow-hidden shadow-lg">
+    <div id="dashboard-hero" class="relative bg-gradient-to-r from-violet-900/40 via-indigo-900/30 to-neutral-900 border border-violet-950/45 p-8 rounded-2xl overflow-hidden shadow-lg">
       <div class="absolute right-0 top-0 translate-x-12 -translate-y-12 h-64 w-64 bg-violet-600/10 blur-3xl rounded-full"></div>
       
       <div class="max-w-xl space-y-3 relative z-10">
@@ -42,13 +67,14 @@ const handleSaved = () => {
     </div>
 
     <!-- Workspace Grid -->
-    <div class="space-y-4">
+    <div id="dashboard-workspace-section" class="space-y-4">
       <div class="flex items-center justify-between">
         <div>
           <h3 class="text-base font-semibold text-white">Daftar Tempat Kerja</h3>
           <p class="text-xs text-neutral-500">Pilih tempat kerja untuk melihat project aktif.</p>
         </div>
         <button
+          id="dashboard-add-workspace-btn"
           @click="openForm()"
           class="flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-lg shadow-md transition cursor-pointer"
         >
@@ -135,5 +161,66 @@ const handleSaved = () => {
       @close="isModalOpen = false"
       @saved="handleSaved"
     />
+
+    <!-- Welcome / First-Visit Prompt -->
+    <Teleport to="body">
+      <Transition name="prompt-fade">
+        <div
+          v-if="showWelcomePrompt"
+          class="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+        >
+          <!-- Backdrop -->
+          <div
+            class="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            @click="dismissPrompt"
+          ></div>
+
+          <!-- Prompt Card -->
+          <div class="relative bg-neutral-900 border border-neutral-800 rounded-2xl shadow-2xl shadow-violet-500/5 max-w-md w-full p-8 space-y-6 animate-fade-in">
+            <!-- Close button -->
+            <button
+              @click="dismissPrompt"
+              class="absolute top-4 right-4 text-neutral-500 hover:text-white p-1 hover:bg-neutral-800 rounded-lg transition cursor-pointer"
+            >
+              <X class="w-4 h-4" />
+            </button>
+
+            <!-- Icon -->
+            <div class="flex justify-center">
+              <div class="h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-600/20 to-indigo-600/20 border border-violet-800/40 flex items-center justify-center">
+                <Sparkles class="w-8 h-8 text-violet-400" />
+              </div>
+            </div>
+
+            <!-- Content -->
+            <div class="text-center space-y-2">
+              <h3 class="text-lg font-bold text-white">Selamat Datang! 👋</h3>
+              <p class="text-sm text-neutral-400 leading-relaxed">
+                Sepertinya ini pertama kalinya kamu menggunakan <span class="text-violet-400 font-semibold">Work Note</span>.
+                Mau kami pandu untuk mengenal fitur-fitur utamanya?
+              </p>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-col gap-2.5">
+              <button
+                @click="startTourFromPrompt"
+                class="group flex items-center justify-center gap-2.5 w-full py-3 text-sm font-bold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-xl shadow-lg shadow-violet-500/15 transition-all cursor-pointer"
+              >
+                <Play class="w-4 h-4" />
+                Ya, Mulai Tur!
+              </button>
+              <button
+                @click="dismissPrompt"
+                class="flex items-center justify-center gap-2 w-full py-3 text-sm font-semibold text-neutral-400 hover:text-white bg-neutral-800/50 hover:bg-neutral-800 border border-neutral-800 rounded-xl transition-all cursor-pointer"
+              >
+                <Rocket class="w-4 h-4" />
+                Nanti Saja, Langsung Mulai
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>

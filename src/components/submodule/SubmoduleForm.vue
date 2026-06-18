@@ -1,8 +1,9 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useWorkNoteStore } from '../../stores/workNoteStore'
 import { X, Trash2 } from 'lucide-vue-next'
 import RichTextEditor from '../editor/RichTextEditor.vue'
+import DatePicker from 'primevue/datepicker'
 
 const props = defineProps({
   moduleId: {
@@ -25,6 +26,40 @@ const startDate = ref('')
 const endDate = ref('')
 const status = ref('belum_mulai')
 const targetModuleId = ref('')
+
+const startDateObj = computed({
+  get: () => startDate.value ? new Date(startDate.value) : null,
+  set: (val) => {
+    if (val) {
+      const year = val.getFullYear()
+      const month = String(val.getMonth() + 1).padStart(2, '0')
+      const day = String(val.getDate()).padStart(2, '0')
+      startDate.value = `${year}-${month}-${day}`
+    } else {
+      startDate.value = ''
+    }
+  }
+})
+
+const endDateObj = computed({
+  get: () => endDate.value ? new Date(endDate.value) : null,
+  set: (val) => {
+    if (val) {
+      const year = val.getFullYear()
+      const month = String(val.getMonth() + 1).padStart(2, '0')
+      const day = String(val.getDate()).padStart(2, '0')
+      endDate.value = `${year}-${month}-${day}`
+    } else {
+      endDate.value = ''
+    }
+  }
+})
+
+watch([startDate, endDate], ([newStart, newEnd]) => {
+  if (newStart && newEnd && newEnd < newStart) {
+    endDate.value = newStart
+  }
+})
 
 const isEdit = computed(() => !!props.submodule)
 
@@ -115,22 +150,28 @@ const deleteSubmodule = () => {
         <!-- Dates, Status, and Parent Module Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <!-- Start Date -->
-          <div class="space-y-1.5">
+          <div class="space-y-1.5 flex flex-col">
             <label class="text-xs font-semibold text-neutral-400">Tanggal Mulai</label>
-            <input
-              v-model="startDate"
-              type="date"
-              class="w-full bg-neutral-950 border border-neutral-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-lg px-3 py-2 text-xs text-white outline-none transition"
+            <DatePicker
+              v-model="startDateObj"
+              dateFormat="dd M yy"
+              showIcon
+              iconDisplay="input"
+              placeholder="Pilih Tanggal Mulai"
+              class="w-full"
             />
           </div>
 
           <!-- End Date -->
-          <div class="space-y-1.5">
+          <div class="space-y-1.5 flex flex-col">
             <label class="text-xs font-semibold text-neutral-400">Tanggal Selesai</label>
-            <input
-              v-model="endDate"
-              type="date"
-              class="w-full bg-neutral-950 border border-neutral-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-lg px-3 py-2 text-xs text-white outline-none transition"
+            <DatePicker
+              v-model="endDateObj"
+              dateFormat="dd M yy"
+              showIcon
+              iconDisplay="input"
+              placeholder="Pilih Tanggal Selesai"
+              class="w-full"
             />
           </div>
 

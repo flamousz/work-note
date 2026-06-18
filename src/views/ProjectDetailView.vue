@@ -148,6 +148,7 @@ const getProjectDateRange = (p) => {
 
       <!-- Add Module Button -->
       <button
+        id="project-add-module-btn"
         @click="openModuleForm()"
         class="flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-lg shadow-md transition cursor-pointer"
       >
@@ -173,7 +174,7 @@ const getProjectDateRange = (p) => {
     </div>
 
     <!-- Kanban Board -->
-    <div class="flex-1 overflow-x-auto min-h-0 pb-2">
+    <div id="project-kanban" class="flex-1 overflow-x-auto min-h-0 pb-2">
       <!-- Empty State -->
       <div 
         v-if="localModules.length === 0" 
@@ -255,7 +256,7 @@ const getProjectDateRange = (p) => {
             <div class="p-2 border-t border-neutral-850/80 flex-shrink-0">
               <button
                 @click="openSubmoduleForm(null, mod.id)"
-                class="w-full py-1.5 flex items-center justify-center gap-1 text-[11px] text-neutral-400 hover:text-white bg-neutral-900/40 hover:bg-neutral-900 border border-neutral-850 border-dashed rounded-lg transition-colors cursor-pointer"
+                class="module-add-submodule-btn w-full py-1.5 flex items-center justify-center gap-1 text-[11px] text-neutral-400 hover:text-white bg-neutral-900/40 hover:bg-neutral-900 border border-neutral-850 border-dashed rounded-lg transition-colors cursor-pointer"
               >
                 <Plus class="w-3.5 h-3.5" />
                 Tambah Submodul
