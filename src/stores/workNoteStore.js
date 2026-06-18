@@ -40,12 +40,14 @@ export const useWorkNoteStore = defineStore('workNote', {
 
   actions: {
     // --- WORKSPACE ---
-    addWorkspace({ name, contractDuration, position }) {
+    addWorkspace({ name, contractDuration, position, startContract, endContract }) {
       const workspace = {
         id: uuidv4(),
         name,
         contractDuration: contractDuration || '',
         position: position || '',
+        startContract: startContract || '',
+        endContract: endContract || '',
         createdAt: new Date().toISOString()
       }
       this.workspaces.push(workspace)

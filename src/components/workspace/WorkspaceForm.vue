@@ -1,7 +1,9 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { useWorkNoteStore } from '../../stores/workNoteStore'
 import { X, Trash2 } from 'lucide-vue-next'
+import DatePicker from 'primevue/datepicker'
+import { differenceInDays } from 'date-fns'
 
 const props = defineProps({
   workspace: {
@@ -15,34 +17,100 @@ const emit = defineEmits(['close', 'saved'])
 const store = useWorkNoteStore()
 
 const name = ref('')
-const contractDuration = ref('')
+const startContract = ref('')
+const endContract = ref('')
 const position = ref('')
 
+const startContractObj = computed({
+  get: () => startContract.value ? new Date(startContract.value) : null,
+  set: (val) => {
+    if (val) {
+      const year = val.getFullYear()
+      const month = String(val.getMonth() + 1).padStart(2, '0')
+      const day = String(val.getDate()).padStart(2, '0')
+      startContract.value = `${year}-${month}-${day}`
+    } else {
+      startContract.value = ''
+    }
+  }
+})
+
+const endContractObj = computed({
+  get: () => endContract.value ? new Date(endContract.value) : null,
+  set: (val) => {
+    if (val) {
+      const year = val.getFullYear()
+      const month = String(val.getMonth() + 1).padStart(2, '0')
+      const day = String(val.getDate()).padStart(2, '0')
+      endContract.value = `${year}-${month}-${day}`
+    } else {
+      endContract.value = ''
+    }
+  }
+})
+
+watch([startContract, endContract], ([newStart, newEnd]) => {
+  if (newStart && newEnd && newEnd < newStart) {
+    endContract.value = newStart
+  }
+})
+
 const isEdit = computed(() => !!props.workspace)
+
+const calculatedDuration = computed(() => {
+  if (!startContract.value || !endContract.value) return ''
+  const start = new Date(startContract.value)
+  const end = new Date(endContract.value)
+  
+  const totalDays = differenceInDays(end, start) + 1
+  if (totalDays <= 0) return '0 Hari'
+  
+  const approximateMonths = totalDays / 30.4375
+  const roundedMonths = Math.round(approximateMonths)
+  
+  if (roundedMonths >= 1) {
+    const errorDays = Math.abs(totalDays - roundedMonths * 30.4375)
+    if (errorDays < 3.5) {
+      return `${roundedMonths} Bulan`
+    }
+    
+    const months = Math.floor(totalDays / 30.4375)
+    const remainingDays = Math.round(totalDays - (months * 30.4375))
+    
+    if (months > 0 && remainingDays > 0) {
+      return `${months} Bulan ${remainingDays} Hari`
+    } else if (months > 0) {
+      return `${months} Bulan`
+    }
+  }
+  
+  return `${totalDays} Hari`
+})
 
 onMounted(() => {
   if (props.workspace) {
     name.value = props.workspace.name
-    contractDuration.value = props.workspace.contractDuration || ''
     position.value = props.workspace.position || ''
+    startContract.value = props.workspace.startContract || ''
+    endContract.value = props.workspace.endContract || ''
   }
 })
 
 const save = () => {
   if (!name.value.trim()) return
 
+  const workspaceData = {
+    name: name.value.trim(),
+    contractDuration: calculatedDuration.value,
+    position: position.value.trim(),
+    startContract: startContract.value,
+    endContract: endContract.value
+  }
+
   if (isEdit.value) {
-    store.updateWorkspace(props.workspace.id, {
-      name: name.value.trim(),
-      contractDuration: contractDuration.value.trim(),
-      position: position.value.trim()
-    })
+    store.updateWorkspace(props.workspace.id, workspaceData)
   } else {
-    store.addWorkspace({
-      name: name.value.trim(),
-      contractDuration: contractDuration.value.trim(),
-      position: position.value.trim()
-    })
+    store.addWorkspace(workspaceData)
   }
   emit('saved')
 }
@@ -86,15 +154,41 @@ const deleteWorkspace = () => {
           />
         </div>
 
-        <!-- Durasi Kontrak -->
-        <div class="space-y-1.5">
-          <label class="text-xs font-semibold text-neutral-400">Durasi Kontrak</label>
-          <input
-            v-model="contractDuration"
-            type="text"
-            placeholder="Contoh: 12 Bulan (Jan - Des 2026)"
-            class="w-full bg-neutral-950 border border-neutral-800 focus:border-violet-500 focus:ring-1 focus:ring-violet-500 rounded-lg px-3 py-2 text-xs text-white placeholder-neutral-600 outline-none transition"
-          />
+        <!-- Periode Kontrak -->
+        <div class="grid grid-cols-2 gap-4">
+          <!-- Start Date -->
+          <div class="space-y-1.5 flex flex-col">
+            <label class="text-xs font-semibold text-neutral-400">Mulai Kontrak</label>
+            <DatePicker
+              v-model="startContractObj"
+              dateFormat="dd M yy"
+              showIcon
+              iconDisplay="input"
+              placeholder="Mulai Kontrak"
+              class="w-full"
+            />
+          </div>
+
+          <!-- End Date -->
+          <div class="space-y-1.5 flex flex-col">
+            <label class="text-xs font-semibold text-neutral-400">Selesai Kontrak</label>
+            <DatePicker
+              v-model="endContractObj"
+              dateFormat="dd M yy"
+              showIcon
+              iconDisplay="input"
+              placeholder="Selesai Kontrak"
+              class="w-full"
+            />
+          </div>
+        </div>
+
+        <!-- Durasi Kontrak Terhitung -->
+        <div v-if="calculatedDuration" class="text-xs bg-neutral-950/60 border border-neutral-850 rounded-lg p-3 flex justify-between items-center">
+          <span class="text-neutral-400 font-semibold">Durasi Kontrak Terhitung:</span>
+          <span class="text-violet-400 font-bold bg-violet-500/10 px-2.5 py-0.5 rounded-full border border-violet-500/20">
+            {{ calculatedDuration }}
+          </span>
         </div>
 
         <!-- Posisi Kerja -->
