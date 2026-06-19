@@ -142,34 +142,48 @@ export function useOnboarding() {
   /* ═══════════════════════════════════════════
      TOUR 2: Full Creation Flow (Multi-Page)
      Tempat Kerja → Project → Modul → Submodul
+     Uses isolated demo data that is auto-cleaned
      ═══════════════════════════════════════════ */
   const startCreationFlowTour = async () => {
-    const workspaces = store.workspaces
-    const firstWs = workspaces.length > 0 ? workspaces[0] : null
+    // Seed demo data — guaranteed to have data for all phases
+    const { demoWsId, demoProjId } = store.seedDemoData()
+
+    /** Helper: cleanup demo data and optionally mark tour completed */
+    const cleanup = (complete = false) => {
+      store.cleanupDemoData()
+      if (complete) markTourCompleted()
+    }
 
     // ─── Phase 1: Dashboard ───
     await router.push('/')
     await sleep(500)
 
     const phase1Result = await runPhase({
-      doneBtnText: firstWs ? 'Ke Workspace →' : 'Selesai ✓',
+      doneBtnText: 'Ke Workspace →',
       steps: [
         {
           element: '#dashboard-hero',
           popover: {
             title: '📍 Ini Dashboard Kamu',
-            description: 'Halaman utama Work Note. Dari sini kamu bisa melihat dan mengelola semua Tempat Kerja.',
+            description: 'Halaman utama Work Note. Di sini kamu bisa melihat dan mengelola semua Tempat Kerja yang kamu miliki.',
             side: 'bottom',
+            align: 'center',
+          },
+        },
+        {
+          element: '#dashboard-workspace-section',
+          popover: {
+            title: '🏢 Daftar Tempat Kerja',
+            description: 'Kami sudah menyiapkan contoh Tempat Kerja untuk tur ini. Di sini semua workspace kamu akan muncul sebagai kartu.',
+            side: 'top',
             align: 'center',
           },
         },
         {
           element: '#dashboard-add-workspace-btn',
           popover: {
-            title: '🏢 Langkah 1: Buat Tempat Kerja',
-            description: firstWs
-              ? `Bagus! Kamu sudah punya Tempat Kerja "${firstWs.name}". Kita akan masuk ke dalamnya.`
-              : 'Klik tombol ini untuk membuat Tempat Kerja pertama. Isi nama perusahaan, posisi, dan durasi kontrak kamu.',
+            title: '➕ Langkah 1: Buat Tempat Kerja',
+            description: 'Setelah tur selesai, klik tombol ini untuk membuat Tempat Kerja kamu sendiri! Isi nama perusahaan, posisi, dan durasi kontrak.',
             side: 'left',
             align: 'start',
           },
@@ -177,27 +191,23 @@ export function useOnboarding() {
       ],
     })
 
-    if (phase1Result === 'closed') return
-    if (!firstWs) {
-      markTourCompleted()
+    if (phase1Result === 'closed') {
+      cleanup()
       return
     }
 
     // ─── Phase 2: Workspace Detail ───
-    await router.push(`/workspace/${firstWs.id}`)
+    await router.push(`/workspace/${demoWsId}`)
     await sleep(500)
 
-    const projects = store.getProjectsByWorkspace(firstWs.id)
-    const firstProject = projects.length > 0 ? projects[0] : null
-
     const phase2Result = await runPhase({
-      doneBtnText: firstProject ? 'Ke Project →' : 'Selesai ✓',
+      doneBtnText: 'Ke Project →',
       steps: [
         {
           element: '#workspace-metadata',
           popover: {
             title: '📋 Info Tempat Kerja',
-            description: 'Di sini kamu bisa melihat detail posisi kerja dan durasi kontrak. Klik tombol edit (✏️) untuk mengubahnya.',
+            description: 'Di sini kamu bisa melihat detail posisi kerja dan durasi kontrak. Klik tombol edit (✏️) untuk mengubahnya kapan saja.',
             side: 'bottom',
             align: 'center',
           },
@@ -206,9 +216,7 @@ export function useOnboarding() {
           element: '#workspace-projects-section',
           popover: {
             title: '📂 Daftar Project',
-            description: firstProject
-              ? `Kamu sudah punya Project "${firstProject.name}". Setiap project mewakili satu kerjaan yang sedang kamu tangani.`
-              : 'Di sini akan tampil semua Project yang kamu buat. Setiap kartu project menampilkan nama, status, dan jadwal.',
+            description: 'Setiap kartu project menampilkan nama, status, dan jadwal. Ini contoh project yang kami siapkan untuk tur.',
             side: 'top',
             align: 'center',
           },
@@ -217,9 +225,7 @@ export function useOnboarding() {
           element: '#workspace-add-project-btn',
           popover: {
             title: '📂 Langkah 2: Buat Project',
-            description: firstProject
-              ? 'Kamu sudah punya Project! Selanjutnya kita masuk ke halaman Project untuk melihat Modul Kerjaan.'
-              : 'Klik untuk membuat Project baru. Berikan nama, deskripsi (opsional), tanggal mulai/akhir, dan status progress.',
+            description: 'Setelah tur, klik tombol ini untuk membuat Project kamu sendiri. Berikan nama, deskripsi, tanggal mulai/akhir, dan status progress.',
             side: 'left',
             align: 'start',
           },
@@ -227,62 +233,50 @@ export function useOnboarding() {
       ],
     })
 
-    if (phase2Result === 'closed') return
-    if (!firstProject) {
-      markTourCompleted()
+    if (phase2Result === 'closed') {
+      cleanup()
       return
     }
 
     // ─── Phase 3: Project Detail (Kanban) ───
-    await router.push(`/workspace/${firstWs.id}/project/${firstProject.id}`)
+    await router.push(`/workspace/${demoWsId}/project/${demoProjId}`)
     await sleep(500)
 
-    const modules = store.getModulesByProject(firstProject.id)
-    const hasModules = modules.length > 0
-
-    const phase3Steps = [
-      {
-        element: '#project-add-module-btn',
-        popover: {
-          title: '📋 Langkah 3: Buat Modul',
-          description: hasModules
-            ? 'Kamu sudah punya Modul! Modul ditampilkan sebagai kolom Kanban yang bisa diatur urutannya dengan drag & drop.'
-            : 'Klik untuk membuat Modul Kerjaan baru. Modul akan menjadi kolom pada Kanban board di bawah.',
-          side: 'left',
-          align: 'start',
-        },
-      },
-      {
-        element: '#project-kanban',
-        popover: {
-          title: '🎯 Kanban Board',
-          description: hasModules
-            ? 'Ini adalah Kanban Board kamu! Setiap kolom mewakili satu Modul. Drag kolom untuk mengatur urutannya.'
-            : 'Area ini akan menampilkan Modul-modul kamu sebagai kolom Kanban setelah dibuat.',
-          side: 'top',
-          align: 'center',
-        },
-      },
-    ]
-
-    if (hasModules) {
-      phase3Steps.push({
-        element: '.module-add-submodule-btn',
-        popover: {
-          title: '✅ Langkah 4: Tambah Submodul',
-          description: 'Langkah terakhir! Tambahkan Submodul ke dalam Modul. Submodul adalah unit kerja terkecil — lengkap dengan status, tanggal, dan catatan (rich text).',
-          side: 'top',
-          align: 'center',
-        },
-      })
-    }
-
     await runPhase({
-      steps: phase3Steps,
       doneBtnText: 'Selesai ✓',
+      steps: [
+        {
+          element: '#project-add-module-btn',
+          popover: {
+            title: '📋 Langkah 3: Buat Modul',
+            description: 'Modul ditampilkan sebagai kolom Kanban. Kamu bisa membuat banyak modul dan mengatur urutannya dengan drag & drop.',
+            side: 'left',
+            align: 'start',
+          },
+        },
+        {
+          element: '#project-kanban',
+          popover: {
+            title: '🎯 Kanban Board',
+            description: 'Ini Kanban Board kamu! Setiap kolom mewakili satu Modul Kerjaan. Drag kolom untuk mengatur urutan, atau drag kartu antar kolom.',
+            side: 'top',
+            align: 'center',
+          },
+        },
+        {
+          element: '.module-add-submodule-btn',
+          popover: {
+            title: '✅ Langkah 4: Tambah Submodul',
+            description: 'Langkah terakhir! Submodul adalah unit kerja terkecil — lengkap dengan status, tanggal, dan catatan rich text. Setelah tur selesai, coba buat sendiri!',
+            side: 'top',
+            align: 'center',
+          },
+        },
+      ],
     })
 
-    markTourCompleted()
+    // Cleanup demo data and mark tour as completed
+    cleanup(true)
   }
 
   return {

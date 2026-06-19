@@ -176,6 +176,131 @@ export const useWorkNoteStore = defineStore('workNote', {
           }
         }
       })
-    }
+    },
+
+    // --- DEMO DATA (Tour Onboarding) ---
+    seedDemoData() {
+      const DEMO_FLAG_KEY = 'wn_tour_demo_active'
+      const DEMO_IDS_KEY = 'wn_tour_demo_ids'
+
+      // Prevent double-seeding
+      if (localStorage.getItem(DEMO_FLAG_KEY) === 'true') {
+        this.cleanupDemoData()
+      }
+
+      const demoWsId = 'demo-ws-001'
+      const demoProjId = 'demo-proj-001'
+      const demoModId = 'demo-mod-001'
+      const demoSubId = 'demo-sub-001'
+
+      const now = new Date().toISOString()
+      const startDate = new Date().toISOString().split('T')[0]
+      const endDate = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+      // Workspace
+      this.workspaces.push({
+        id: demoWsId,
+        name: '📋 Contoh — PT Abang Express',
+        contractDuration: '6 Bulan',
+        position: 'Frontend Developer',
+        startContract: startDate,
+        endContract: endDate,
+        createdAt: now,
+      })
+
+      // Project
+      this.projects.push({
+        id: demoProjId,
+        workspaceId: demoWsId,
+        name: '📂 Contoh — AX Operator Web',
+        description: 'Pengembangan dashboard operator untuk sistem logistik Abang Express.',
+        startDate,
+        endDate,
+        status: 'dalam_proses',
+        createdAt: now,
+      })
+
+      // Module
+      this.modules.push({
+        id: demoModId,
+        projectId: demoProjId,
+        name: '📑 Contoh — Dashboard Module',
+        description: 'Modul untuk halaman dashboard utama operator.',
+        startDate,
+        endDate,
+        status: 'dalam_proses',
+        order: 0,
+        createdAt: now,
+      })
+
+      // Submodule
+      this.submodules.push({
+        id: demoSubId,
+        moduleId: demoModId,
+        name: '✅ Contoh — Slicing Halaman Utama',
+        description: 'Slicing halaman dashboard sesuai desain Figma, termasuk sidebar, header, dan widget statistik.',
+        startDate,
+        endDate,
+        status: 'dalam_proses',
+        order: 0,
+        createdAt: now,
+      })
+
+      // Persist demo IDs & flag
+      localStorage.setItem(DEMO_IDS_KEY, JSON.stringify({
+        workspaceIds: [demoWsId],
+        projectIds: [demoProjId],
+        moduleIds: [demoModId],
+        submoduleIds: [demoSubId],
+      }))
+      localStorage.setItem(DEMO_FLAG_KEY, 'true')
+
+      return { demoWsId, demoProjId, demoModId, demoSubId }
+    },
+
+    cleanupDemoData() {
+      const DEMO_FLAG_KEY = 'wn_tour_demo_active'
+      const DEMO_IDS_KEY = 'wn_tour_demo_ids'
+
+      const raw = localStorage.getItem(DEMO_IDS_KEY)
+      if (!raw) {
+        localStorage.removeItem(DEMO_FLAG_KEY)
+        return
+      }
+
+      try {
+        const ids = JSON.parse(raw)
+
+        // Remove in reverse order (submodules → modules → projects → workspaces)
+        if (ids.submoduleIds) {
+          this.submodules = this.submodules.filter(s => !ids.submoduleIds.includes(s.id))
+        }
+        if (ids.moduleIds) {
+          this.modules = this.modules.filter(m => !ids.moduleIds.includes(m.id))
+        }
+        if (ids.projectIds) {
+          this.projects = this.projects.filter(p => !ids.projectIds.includes(p.id))
+        }
+        if (ids.workspaceIds) {
+          this.workspaces = this.workspaces.filter(w => !ids.workspaceIds.includes(w.id))
+        }
+      } catch (e) {
+        // Fallback: remove anything with demo- prefix
+        this.submodules = this.submodules.filter(s => !s.id.startsWith('demo-'))
+        this.modules = this.modules.filter(m => !m.id.startsWith('demo-'))
+        this.projects = this.projects.filter(p => !p.id.startsWith('demo-'))
+        this.workspaces = this.workspaces.filter(w => !w.id.startsWith('demo-'))
+      }
+
+      localStorage.removeItem(DEMO_IDS_KEY)
+      localStorage.removeItem(DEMO_FLAG_KEY)
+    },
+
+    checkAndCleanupStaleDemoData() {
+      const DEMO_FLAG_KEY = 'wn_tour_demo_active'
+      if (localStorage.getItem(DEMO_FLAG_KEY) === 'true') {
+        this.cleanupDemoData()
+      }
+    },
   }
 })

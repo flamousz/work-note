@@ -3,11 +3,18 @@ import { computed, onMounted, onUnmounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import AppSidebar from "./components/layout/AppSidebar.vue";
 import AppHeader from "./components/layout/AppHeader.vue";
+import { useWorkNoteStore } from "./stores/workNoteStore";
 
 const route = useRoute();
 const router = useRouter();
+const store = useWorkNoteStore();
 
 const isBlankLayout = computed(() => route.meta.layout === "blank");
+
+// Cleanup stale demo data from crashed/force-closed tour
+if (typeof store.checkAndCleanupStaleDemoData === 'function') {
+  store.checkAndCleanupStaleDemoData();
+}
 
 // Responsive screen size check to handle live resize
 const checkScreenSize = () => {
