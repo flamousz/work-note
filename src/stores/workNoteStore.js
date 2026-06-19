@@ -2,6 +2,56 @@ import { defineStore } from 'pinia'
 import { useLocalStorage } from '@vueuse/core'
 import { v4 as uuidv4 } from 'uuid'
 
+// Helper functions for task checklist tree
+function findTaskInTree(tasks, taskId) {
+  if (!tasks) return null
+  for (let i = 0; i < tasks.length; i++) {
+    if (tasks[i].id === taskId) {
+      return { parent: null, index: i, task: tasks[i], siblings: tasks }
+    }
+    if (tasks[i].children && tasks[i].children.length > 0) {
+      const found = findTaskInTree(tasks[i].children, taskId)
+      if (found) {
+        if (found.parent === null) {
+          found.parent = tasks[i]
+        }
+        return found
+      }
+    }
+  }
+  return null
+}
+
+function countTasksInTree(tasks) {
+  let done = 0
+  let total = 0
+  if (!tasks) return { done, total }
+  
+  function recurse(list) {
+    for (const item of list) {
+      total++
+      if (item.done) done++
+      if (item.children && item.children.length > 0) {
+        recurse(item.children)
+      }
+    }
+  }
+  recurse(tasks)
+  return { done, total }
+}
+
+function getTaskDepth(tasks, taskId) {
+  const found = findTaskInTree(tasks, taskId)
+  if (!found) return -1
+  let depth = 0
+  let curr = found
+  while (curr.parent) {
+    depth++
+    curr = findTaskInTree(tasks, curr.parent.id)
+  }
+  return depth
+}
+
 export const useWorkNoteStore = defineStore('workNote', {
   state: () => ({
     workspaces: useLocalStorage('wn_workspaces', []),
@@ -35,6 +85,11 @@ export const useWorkNoteStore = defineStore('workNote', {
     },
     getSubmoduleById: (state) => (id) => {
       return state.submodules.find(s => s.id === id)
+    },
+    getTaskProgress: (state) => (submoduleId) => {
+      const submodule = state.submodules.find(s => s.id === submoduleId)
+      if (!submodule) return { done: 0, total: 0 }
+      return countTasksInTree(submodule.tasks || [])
     }
   },
 
@@ -151,6 +206,7 @@ export const useWorkNoteStore = defineStore('workNote', {
         endDate: endDate || '',
         status: status || 'belum_mulai',
         order: nextOrder,
+        tasks: [],
         createdAt: new Date().toISOString()
       }
       this.submodules.push(submodule)
@@ -176,6 +232,77 @@ export const useWorkNoteStore = defineStore('workNote', {
           }
         }
       })
+    },
+
+    // --- TASKS ACTIONS ---
+    addTask(submoduleId, text, parentId = null) {
+      const submodule = this.submodules.find(s => s.id === submoduleId)
+      if (!submodule) return null
+
+      if (!submodule.tasks) {
+        submodule.tasks = []
+      }
+
+      const newTask = {
+        id: uuidv4(),
+        text,
+        done: false,
+        createdAt: new Date().toISOString(),
+        children: []
+      }
+
+      if (!parentId) {
+        submodule.tasks.push(newTask)
+      } else {
+        const parentDepth = getTaskDepth(submodule.tasks, parentId)
+        if (parentDepth === -1 || parentDepth >= 2) {
+          // Exceeds max 3 levels (depth 0, 1, 2)
+          return null
+        }
+        const found = findTaskInTree(submodule.tasks, parentId)
+        if (found) {
+          if (!found.task.children) {
+            found.task.children = []
+          }
+          found.task.children.push(newTask)
+        }
+      }
+      return newTask
+    },
+
+    toggleTask(submoduleId, taskId) {
+      const submodule = this.submodules.find(s => s.id === submoduleId)
+      if (!submodule || !submodule.tasks) return
+
+      const found = findTaskInTree(submodule.tasks, taskId)
+      if (found) {
+        const newDone = !found.task.done
+        const now = new Date().toISOString()
+        found.task.done = newDone
+        found.task.updatedAt = newDone ? now : null
+        
+        // Recursive helper to set all children to match the parent's check status
+        const toggleChildren = (task, doneValue) => {
+          if (task.children) {
+            task.children.forEach(child => {
+              child.done = doneValue
+              child.updatedAt = doneValue ? now : null
+              toggleChildren(child, doneValue)
+            })
+          }
+        }
+        toggleChildren(found.task, newDone)
+      }
+    },
+
+    deleteTask(submoduleId, taskId) {
+      const submodule = this.submodules.find(s => s.id === submoduleId)
+      if (!submodule || !submodule.tasks) return
+
+      const found = findTaskInTree(submodule.tasks, taskId)
+      if (found) {
+        found.siblings.splice(found.index, 1)
+      }
     },
 
     // --- DEMO DATA (Tour Onboarding) ---
@@ -243,6 +370,33 @@ export const useWorkNoteStore = defineStore('workNote', {
         endDate,
         status: 'dalam_proses',
         order: 0,
+        tasks: [
+          {
+            id: 'demo-task-001',
+            text: 'Setup project structure',
+            done: true,
+            createdAt: now,
+            updatedAt: now,
+            children: [
+              { id: 'demo-task-004', text: 'Install dependencies', done: true, createdAt: now, updatedAt: now, children: [] },
+              { id: 'demo-task-005', text: 'Configure vite', done: true, createdAt: now, updatedAt: now, children: [] }
+            ]
+          },
+          {
+            id: 'demo-task-002',
+            text: 'Slicing halaman utama',
+            done: false,
+            createdAt: now,
+            children: []
+          },
+          {
+            id: 'demo-task-003',
+            text: 'Integrasi API dashboard',
+            done: false,
+            createdAt: now,
+            children: []
+          }
+        ],
         createdAt: now,
       })
 

@@ -1,7 +1,8 @@
 <script setup>
 import { computed } from "vue";
-import { Calendar, CheckSquare, Edit3 } from "lucide-vue-next";
+import { Calendar, CheckSquare, Eye } from "lucide-vue-next";
 import { format } from "date-fns";
+import { useWorkNoteStore } from "../../stores/workNoteStore";
 
 const props = defineProps({
   submodule: {
@@ -11,6 +12,12 @@ const props = defineProps({
 });
 
 const emit = defineEmits(["edit"]);
+
+const store = useWorkNoteStore();
+
+const progress = computed(() => {
+  return store.getTaskProgress(props.submodule.id);
+});
 
 const statusInfo = computed(() => {
   switch (props.submodule.status) {
@@ -89,7 +96,7 @@ const hasNotes = computed(() => {
         class="text-neutral-500 hover:text-white hover:bg-neutral-800 p-1 rounded transition cursor-pointer flex-shrink-0"
         title="Detail / Edit"
       >
-        <Edit3 class="w-3.5 h-3.5" />
+        <Eye class="w-3.5 h-3.5" />
       </button>
     </div>
 
@@ -107,6 +114,17 @@ const hasNotes = computed(() => {
 
       <!-- Date or Notes icon -->
       <div class="flex items-center gap-2.5 text-neutral-500 text-[10px]">
+        <!-- Task progress badge -->
+        <span
+          v-if="progress.total > 0"
+          class="flex items-center gap-1 font-semibold"
+          :class="progress.done === progress.total ? 'text-emerald-400' : 'text-neutral-400'"
+          title="Progress Task Checklist"
+        >
+          <CheckSquare class="w-3.5 h-3.5" :class="progress.done === progress.total ? 'text-emerald-400' : 'text-neutral-500'" />
+          {{ progress.done }}/{{ progress.total }}
+        </span>
+
         <span
           v-if="dateRange"
           class="flex items-center gap-1 font-medium text-neutral-400"

@@ -11,6 +11,10 @@ const props = defineProps({
   placeholder: {
     type: String,
     default: 'Tulis deskripsi...'
+  },
+  editable: {
+    type: Boolean,
+    default: true
   }
 })
 
@@ -18,6 +22,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const editor = useEditor({
   content: props.modelValue,
+  editable: props.editable,
   extensions: [
     StarterKit,
   ],
@@ -38,6 +43,13 @@ watch(() => props.modelValue, (newVal) => {
   }
 })
 
+// Sync editable state
+watch(() => props.editable, (newVal) => {
+  if (editor.value) {
+    editor.value.setEditable(newVal)
+  }
+})
+
 onBeforeUnmount(() => {
   if (editor.value) {
     editor.value.destroy()
@@ -48,7 +60,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="flex flex-col border border-neutral-700/60 rounded-md overflow-hidden bg-neutral-900/40 text-neutral-200">
     <!-- Toolbar -->
-    <div class="flex flex-wrap gap-1 items-center p-2 border-b border-neutral-700/60 bg-neutral-950/80">
+    <div v-if="editable" class="flex flex-wrap gap-1 items-center p-2 border-b border-neutral-700/60 bg-neutral-950/80">
       <button
         type="button"
         @click="editor?.chain().focus().toggleBold().run()"
@@ -125,6 +137,6 @@ onBeforeUnmount(() => {
     </div>
     
     <!-- Editor Content Area -->
-    <editor-content :editor="editor" />
+    <editor-content :editor="editor" :class="{ 'opacity-70 cursor-not-allowed bg-neutral-950/20': !editable }" />
   </div>
 </template>

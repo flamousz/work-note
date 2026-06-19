@@ -3,7 +3,7 @@ import { ref, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useWorkNoteStore } from '../stores/workNoteStore'
 import draggable from 'vuedraggable'
-import { ArrowLeft, Plus, Edit, GripVertical, Calendar, FolderKanban, ClipboardList } from 'lucide-vue-next'
+import { ArrowLeft, Plus, Edit, Eye, GripVertical, Calendar, FolderKanban, ClipboardList } from 'lucide-vue-next'
 import ModuleForm from '../components/module/ModuleForm.vue'
 import SubmoduleForm from '../components/submodule/SubmoduleForm.vue'
 import ProjectForm from '../components/project/ProjectForm.vue'
@@ -226,9 +226,9 @@ const getProjectDateRange = (p) => {
                 <button 
                   @click="openModuleForm(mod)" 
                   class="text-neutral-500 hover:text-white p-0.5 hover:bg-neutral-800 rounded transition cursor-pointer"
-                  title="Edit Modul"
+                  title="Detail Modul"
                 >
-                  <Edit class="w-3 h-3" />
+                  <Eye class="w-3 h-3" />
                 </button>
               </div>
             </div>
