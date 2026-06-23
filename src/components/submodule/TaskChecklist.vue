@@ -110,7 +110,12 @@ function handleAddSubTask(parentId) {
   if (!text) return;
   store.addTask(props.submoduleId, text, parentId);
   subTaskText.value = "";
-  activeSubInputId.value = null;
+  nextTick(() => {
+    const input = subInputRefs.value[parentId];
+    if (input) {
+      input.focus();
+    }
+  });
 }
 
 function cancelSubInput() {
@@ -177,7 +182,7 @@ function handleDelete(taskId) {
         <div
           class="flex items-start justify-between py-1 px-2 -mx-2 rounded hover:bg-neutral-800/30 transition-colors"
         >
-          <div class="flex items-start gap-2.5 flex-1 min-w-0">
+          <label class="flex items-start gap-2.5 flex-1 min-w-0 cursor-pointer">
             <input
               type="checkbox"
               :checked="task.done"
@@ -186,7 +191,7 @@ function handleDelete(taskId) {
             />
             <span
               :class="[
-                'text-xs break-words leading-relaxed transition-all duration-300',
+                'text-xs break-words leading-relaxed transition-all duration-300 select-none',
                 task.done
                   ? 'text-neutral-500 line-through opacity-60'
                   : 'text-neutral-300',
@@ -194,7 +199,7 @@ function handleDelete(taskId) {
             >
               {{ task.text }}
             </span>
-          </div>
+          </label>
 
           <!-- Right side info & actions -->
           <div class="flex items-center gap-3 shrink-0 ml-2 self-center">

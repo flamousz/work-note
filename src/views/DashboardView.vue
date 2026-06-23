@@ -4,6 +4,7 @@ import { useWorkNoteStore } from '../stores/workNoteStore'
 import { Briefcase, Calendar, User, ArrowRight, Edit, Plus, FolderKanban, Sparkles, X, Play, Rocket } from 'lucide-vue-next'
 import WorkspaceForm from '../components/workspace/WorkspaceForm.vue'
 import { useOnboarding } from '../composables/useOnboarding'
+import { differenceInDays } from 'date-fns'
 
 const store = useWorkNoteStore()
 const { hasCompletedTour, startDashboardTour } = useOnboarding()
@@ -16,6 +17,43 @@ const workspaces = computed(() => store.workspaces)
 
 const getProjectCount = (workspaceId) => {
   return store.getProjectsByWorkspace(workspaceId).length
+}
+
+const getContractLabel = (ws) => {
+  if (ws.contractType === 'tetap') {
+    return 'Karyawan Tetap'
+  }
+  
+  if (!ws.startContract || !ws.endContract) {
+    return ws.contractDuration || '-'
+  }
+  
+  const start = new Date(ws.startContract)
+  const end = new Date(ws.endContract)
+  
+  const totalDays = differenceInDays(end, start) + 1
+  if (totalDays <= 0) return '0 Hari'
+  
+  const approximateMonths = totalDays / 30.4375
+  const roundedMonths = Math.round(approximateMonths)
+  
+  if (roundedMonths >= 1) {
+    const errorDays = Math.abs(totalDays - roundedMonths * 30.4375)
+    if (errorDays < 3.5) {
+      return `Kontrak: ${roundedMonths} Bulan`
+    }
+    
+    const months = Math.floor(totalDays / 30.4375)
+    const remainingDays = Math.round(totalDays - (months * 30.4375))
+    
+    if (months > 0 && remainingDays > 0) {
+      return `Kontrak: ${months} Bulan ${remainingDays} Hari`
+    } else if (months > 0) {
+      return `Kontrak: ${months} Bulan`
+    }
+  }
+  
+  return `Kontrak: ${totalDays} Hari`
 }
 
 const openForm = (workspace = null) => {
@@ -135,9 +173,9 @@ const dismissPrompt = () => {
                 <User class="w-3.5 h-3.5 text-neutral-500" />
                 <span class="truncate">{{ ws.position }}</span>
               </div>
-              <div v-if="ws.contractDuration" class="flex items-center gap-2">
+              <div class="flex items-center gap-2">
                 <Calendar class="w-3.5 h-3.5 text-neutral-500" />
-                <span class="truncate">{{ ws.contractDuration }}</span>
+                <span class="truncate">{{ getContractLabel(ws) }}</span>
               </div>
             </div>
           </div>

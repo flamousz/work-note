@@ -81,6 +81,10 @@
   border: 2px dashed rgba(124, 58, 237, 0.5) !important;
 }
 
+.drag-chosen {
+  opacity: 1 !important;
+}
+
 /* Glassmorphism utility variables */
 :root {
   --bg-gradient: radial-gradient(circle at top, #0e0e16 0%, #060609 100%);

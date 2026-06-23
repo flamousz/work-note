@@ -95,14 +95,14 @@ export const useWorkNoteStore = defineStore('workNote', {
 
   actions: {
     // --- WORKSPACE ---
-    addWorkspace({ name, contractDuration, position, startContract, endContract }) {
+    addWorkspace({ name, contractType, position, startContract, endContract }) {
       const workspace = {
         id: uuidv4(),
         name,
-        contractDuration: contractDuration || '',
+        contractType: contractType || 'kontrak',
         position: position || '',
-        startContract: startContract || '',
-        endContract: endContract || '',
+        startContract: contractType === 'tetap' ? '' : (startContract || ''),
+        endContract: contractType === 'tetap' ? '' : (endContract || ''),
         createdAt: new Date().toISOString()
       }
       this.workspaces.push(workspace)
@@ -111,7 +111,12 @@ export const useWorkNoteStore = defineStore('workNote', {
     updateWorkspace(id, updates) {
       const idx = this.workspaces.findIndex(w => w.id === id)
       if (idx !== -1) {
-        this.workspaces[idx] = { ...this.workspaces[idx], ...updates }
+        const mergedUpdates = { ...updates }
+        if (mergedUpdates.contractType === 'tetap') {
+          mergedUpdates.startContract = ''
+          mergedUpdates.endContract = ''
+        }
+        this.workspaces[idx] = { ...this.workspaces[idx], ...mergedUpdates }
       }
     },
     deleteWorkspace(id) {
@@ -328,7 +333,7 @@ export const useWorkNoteStore = defineStore('workNote', {
       this.workspaces.push({
         id: demoWsId,
         name: '📋 Contoh — PT Abang Express',
-        contractDuration: '6 Bulan',
+        contractType: 'kontrak',
         position: 'Frontend Developer',
         startContract: startDate,
         endContract: endDate,

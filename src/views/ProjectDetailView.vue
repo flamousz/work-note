@@ -193,7 +193,6 @@ const getProjectDateRange = (p) => {
         </button>
       </div>
 
-      <!-- Columns Draggable (Modules) -->
       <draggable
         v-else
         v-model="localModules"
@@ -202,6 +201,8 @@ const getProjectDateRange = (p) => {
         item-key="id"
         class="flex gap-5 h-full"
         handle=".column-handle"
+        :animation="200"
+        chosen-class="drag-chosen"
       >
         <template #item="{ element: mod }">
           <div class="w-72 bg-neutral-950/50 border border-neutral-850 rounded-xl flex flex-col max-h-full">

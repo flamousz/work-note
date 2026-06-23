@@ -5,6 +5,7 @@ import { useWorkNoteStore } from '../stores/workNoteStore'
 import { FolderKanban, Calendar, ArrowLeft, Plus, Edit, Briefcase, Award } from 'lucide-vue-next'
 import ProjectForm from '../components/project/ProjectForm.vue'
 import WorkspaceForm from '../components/workspace/WorkspaceForm.vue'
+import { differenceInDays } from 'date-fns'
 
 const props = defineProps({
   workspaceId: {
@@ -24,6 +25,44 @@ const isWorkspaceModalOpen = ref(false)
 const workspace = computed(() => store.getWorkspaceById(props.workspaceId))
 
 const projects = computed(() => store.getProjectsByWorkspace(props.workspaceId))
+
+const getContractLabel = (ws) => {
+  if (!ws) return '-'
+  if (ws.contractType === 'tetap') {
+    return 'Karyawan Tetap'
+  }
+  
+  if (!ws.startContract || !ws.endContract) {
+    return ws.contractDuration || '-'
+  }
+  
+  const start = new Date(ws.startContract)
+  const end = new Date(ws.endContract)
+  
+  const totalDays = differenceInDays(end, start) + 1
+  if (totalDays <= 0) return '0 Hari'
+  
+  const approximateMonths = totalDays / 30.4375
+  const roundedMonths = Math.round(approximateMonths)
+  
+  if (roundedMonths >= 1) {
+    const errorDays = Math.abs(totalDays - roundedMonths * 30.4375)
+    if (errorDays < 3.5) {
+      return `Kontrak: ${roundedMonths} Bulan`
+    }
+    
+    const months = Math.floor(totalDays / 30.4375)
+    const remainingDays = Math.round(totalDays - (months * 30.4375))
+    
+    if (months > 0 && remainingDays > 0) {
+      return `Kontrak: ${months} Bulan ${remainingDays} Hari`
+    } else if (months > 0) {
+      return `Kontrak: ${months} Bulan`
+    }
+  }
+  
+  return `Kontrak: ${totalDays} Hari`
+}
 
 const openProjectForm = (project = null) => {
   selectedProject.value = project
@@ -139,8 +178,8 @@ const getProjectDateRange = (project) => {
           <Calendar class="w-4 h-4" />
         </div>
         <div class="space-y-0.5 min-w-0">
-          <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Durasi Kontrak</p>
-          <p class="text-xs text-neutral-300 font-semibold truncate">{{ workspace.contractDuration || '-' }}</p>
+          <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-wider">Status Kepegawaian</p>
+          <p class="text-xs text-neutral-300 font-semibold truncate">{{ getContractLabel(workspace) }}</p>
         </div>
       </div>
     </div>
