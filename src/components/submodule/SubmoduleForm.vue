@@ -286,7 +286,7 @@ const deleteSubmodule = () => {
               @click="isReadMode = false"
               class="px-4 py-2 text-xs font-semibold text-white bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 rounded-lg shadow-md transition cursor-pointer"
             >
-              Edit
+              Editt
             </button>
             <button
               v-else
